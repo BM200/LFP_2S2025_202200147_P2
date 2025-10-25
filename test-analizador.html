@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Analizador Léxico - JavaBridge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .warning {
+            background: #ff6b6b;
+            color: white;
+            padding: 15px;
+            margin: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .content {
+            padding: 30px;
+        }
+
+        .editor-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .editor-section {
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .editor-header {
+            background: #f8f9fa;
+            padding: 12px 20px;
+            border-bottom: 2px solid #ddd;
+            font-weight: bold;
+            color: #333;
+        }
+
+        textarea {
+            width: 100%;
+            height: 400px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            border: none;
+            resize: vertical;
+            background: #1e1e1e;
+            color: #d4d4d4;
+        }
+
+        .output {
+            width: 100%;
+            height: 400px;
+            padding: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 13px;
+            background: #f8f9fa;
+            overflow-y: auto;
+            white-space: pre-wrap;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            color: white;
+        }
+
+        .btn-info {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        .tokens-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .tokens-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+
+        .tokens-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .tokens-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .error-row {
+            background: #ffe6e6;
+        }
+
+        .error-row:hover {
+            background: #ffd6d6;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.85em;
+            font-weight: bold;
+        }
+
+        .badge-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .badge-error {
+            background: #dc3545;
+            color: white;
+        }
+
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🔍 Test Analizador Léxico</h1>
+            <p>JavaBridge - Proyecto 2 LFP</p>
+            <p style="font-size: 0.9em; margin-top: 10px;">⚠️ SIN REGEX - Procesamiento carácter por carácter</p>
+        </div>
+
+        <div class="warning">
+            ⚠️ IMPORTANTE: Este analizador NO usa expresiones regulares (regex) - Todo es procesamiento manual
+        </div>
+
+        <div class="content">
+            <div class="buttons">
+                <button class="btn-primary" onclick="analizar()">🚀 Analizar Código</button>
+                <button class="btn-success" onclick="cargarEjemplo1()">📝 Ejemplo Válido</button>
+                <button class="btn-warning" onclick="cargarEjemplo2()">❌ Ejemplo con Errores</button>
+                <button class="btn-info" onclick="limpiar()">🗑️ Limpiar</button>
+            </div>
+
+            <div class="editor-container">
+                <div class="editor-section">
+                    <div class="editor-header">📄 Código Java</div>
+                    <textarea id="inputCode" placeholder="Escribe tu código Java aquí...">public class Calculadora {
+    public static void main(String[] args) {
+        int numero = 42;
+        double pi = 3.14;
+        char letra = 'A';
+        String mensaje = "Hola Mundo";
+        boolean activo = true;
+        
+        numero++;
+        numero--;
+        
+        if (numero >= 40) {
+            System.out.println(mensaje);
+        }
+    }
+}</textarea>
+                </div>
+
+                <div class="editor-section">
+                    <div class="editor-header">📊 Resultados</div>
+                    <div id="output" class="output">Presiona "Analizar Código" para comenzar...</div>
+                </div>
+            </div>
+
+            <div id="stats" class="stats hidden">
+                <div class="stat-card">
+                    <h3 id="tokenCount">0</h3>
+                    <p>Tokens Encontrados</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="errorCount">0</h3>
+                    <p>Errores Léxicos</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="lineCount">0</h3>
+                    <p>Líneas Analizadas</p>
+                </div>
+                <div class="stat-card">
+                    <h3 id="status">-</h3>
+                    <p>Estado</p>
+                </div>
+            </div>
+
+            <div id="tokensContainer"></div>
+        </div>
+    </div>
+
+    <!-- Scripts del analizador -->
+    <script src="js/lexico/Token.js"></script>
+    <script src="js/lexico/TipoToken.js"></script>
+    <script src="js/lexico/AnalizadorLexico.js"></script>
+
+    <script>
+        function analizar() {
+            const codigo = document.getElementById('inputCode').value;
+            const outputDiv = document.getElementById('output');
+            const statsDiv = document.getElementById('stats');
+            const tokensContainer = document.getElementById('tokensContainer');
+
+            // Limpiar resultados anteriores
+            outputDiv.innerHTML = '⏳ Analizando...\n';
+            
+            // Crear analizador y analizar
+            const analizador = new AnalizadorLexico(codigo);
+            const resultado = analizador.analizar();
+
+            // Mostrar estadísticas
+            statsDiv.classList.remove('hidden');
+            document.getElementById('tokenCount').textContent = resultado.tokens.length;
+            document.getElementById('errorCount').textContent = resultado.errores.length;
+            document.getElementById('lineCount').textContent = analizador.linea;
+            
+            const statusEl = document.getElementById('status');
+            if (resultado.exito) {
+                statusEl.innerHTML = '<span class="badge badge-success">✓ ÉXITO</span>';
+            } else {
+                statusEl.innerHTML = '<span class="badge badge-error">✗ ERRORES</span>';
+            }
+
+            // Mostrar resumen en output
+            let output = '═══════════════════════════════════════════\n';
+            output += '           ANÁLISIS LÉXICO COMPLETADO\n';
+            output += '═══════════════════════════════════════════\n\n';
+            output += `✓ Tokens encontrados: ${resultado.tokens.length}\n`;
+            output += `✓ Errores léxicos: ${resultado.errores.length}\n`;
+            output += `✓ Líneas analizadas: ${analizador.linea}\n`;
+            output += `✓ Estado: ${resultado.exito ? 'ÉXITO ✓' : 'CON ERRORES ✗'}\n\n`;
+
+            if (resultado.errores.length > 0) {
+                output += '═══ ERRORES LÉXICOS ═══\n\n';
+                resultado.errores.forEach((error, idx) => {
+                    output += `${idx + 1}. [${error.tipo}] "${error.error}"\n`;
+                    output += `   Descripción: ${error.descripcion}\n`;
+                    output += `   Ubicación: Línea ${error.linea}, Columna ${error.columna}\n\n`;
+                });
+            }
+
+            output += '\nVer tabla de tokens abajo ↓';
+            outputDiv.textContent = output;
+
+            // Mostrar tabla de tokens
+            mostrarTablaTokens(resultado.tokens);
+        }
+
+        function mostrarTablaTokens(tokens) {
+            const container = document.getElementById('tokensContainer');
+            
+            if (tokens.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+
+            let html = '<h2 style="margin: 30px 0 20px 0;">📋 Tabla de Tokens</h2>';
+            html += '<table class="tokens-table">';
+            html += '<thead><tr>';
+            html += '<th>No.</th>';
+            html += '<th>Lexema</th>';
+            html += '<th>Tipo</th>';
+            html += '<th>Línea</th>';
+            html += '<th>Columna</th>';
+            html += '</tr></thead>';
+            html += '<tbody>';
+
+            tokens.forEach((token, idx) => {
+                html += '<tr>';
+                html += `<td>${idx + 1}</td>`;
+                html += `<td><code>${escapeHtml(token.lexema)}</code></td>`;
+                html += `<td>${token.tipo}</td>`;
+                html += `<td>${token.linea}</td>`;
+                html += `<td>${token.columna}</td>`;
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function cargarEjemplo1() {
+            document.getElementById('inputCode').value = `public class MiPrograma {
+    public static void main(String[] args) {
+        // Declaraciones
+        int contador = 0;
+        String mensaje = "Inicio del programa";
+        boolean activo = true;
+
+        System.out.println(mensaje);
+
+        // Ciclo for
+        for (int i = 1; i <= 5; i++) {
+            System.out.println("Iteracion: " + i);
+            contador = contador + i;
+        }
+
+        // Condicional
+        if (contador > 10) {
+            System.out.println("Contador mayor a 10: " + contador);
+        } else {
+            System.out.println("Contador menor o igual a 10");
+        }
+
+        // Ciclo while
+        while (activo) {
+            System.out.println("Ejecutando while");
+            activo = false;
+        }
+    }
+}`;
+        }
+
+        function cargarEjemplo2() {
+            document.getElementById('inputCode').value = `public class TestErrores {
+    public static void main(String[] args) {
+        int x = 10;
+        char c = @;           // Error: carácter no reconocido
+        String s = "hola;     // Error: cadena sin cerrar
+        double d = 12.34.56;  // Error: número mal formado
+        char mal = 'ab;       // Error: carácter mal formado
+    }
+}`;
+        }
+
+        function limpiar() {
+            document.getElementById('inputCode').value = '';
+            document.getElementById('output').textContent = 'Presiona "Analizar Código" para comenzar...';
+            document.getElementById('stats').classList.add('hidden');
+            document.getElementById('tokensContainer').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

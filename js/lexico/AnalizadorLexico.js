@@ -4,6 +4,17 @@
  * mediante la lectura secuencial del código fuente.
  */
 
+// Importar dependencias (Node.js)
+if (typeof require !== 'undefined') {
+    const Token = require('./Token.js');
+    const { TipoToken, PALABRAS_RESERVADAS } = require('./TipoToken.js');
+    
+    // Hacer disponibles globalmente para uso en la clase
+    global.Token = Token;
+    global.TipoToken = TipoToken;
+    global.PALABRAS_RESERVADAS = PALABRAS_RESERVADAS;
+}
+
 class AnalizadorLexico {
     /**
      * Constructor del analizador léxico
@@ -322,6 +333,20 @@ class AnalizadorLexico {
             return;
         }
         
+        if (char === '&' && siguiente === '&') {
+            this.tokens.push(new Token(TipoToken.AND, '&&', inicioLinea, inicioColumna));
+            this.avanzar();
+            this.avanzar();
+            return;
+        }
+        
+        if (char === '|' && siguiente === '|') {
+            this.tokens.push(new Token(TipoToken.OR, '||', inicioLinea, inicioColumna));
+            this.avanzar();
+            this.avanzar();
+            return;
+        }
+        
         // Operadores de un carácter
         const simbolos = {
             '{': TipoToken.LLAVE_ABRE,
@@ -338,8 +363,10 @@ class AnalizadorLexico {
             '-': TipoToken.MENOS,
             '*': TipoToken.MULTIPLICACION,
             '/': TipoToken.DIVISION,
+            '%': TipoToken.MODULO,
             '>': TipoToken.MAYOR_QUE,
-            '<': TipoToken.MENOR_QUE
+            '<': TipoToken.MENOR_QUE,
+            '!': TipoToken.NOT
         };
         
         const tipo = simbolos[char];
@@ -449,7 +476,7 @@ class AnalizadorLexico {
      * Verifica si un carácter es un símbolo válido
      */
     esSimbolo(char) {
-        const simbolos = '{}()[];,.=+-*/><!';
+        const simbolos = '{}()[];,.=+-*/%><!&|';
         return simbolos.includes(char);
     }
 

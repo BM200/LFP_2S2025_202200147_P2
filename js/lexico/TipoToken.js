@@ -34,6 +34,12 @@ const TipoToken = {
     MENOS: 'MENOS',                     // -
     MULTIPLICACION: 'MULTIPLICACION',   // *
     DIVISION: 'DIVISION',               // /
+    MODULO: 'MODULO',                   // %
+    
+    // Operadores lógicos
+    AND: 'AND',                         // &&
+    OR: 'OR',                           // ||
+    NOT: 'NOT',                         // !
     
     // Operadores de comparación
     IGUAL_IGUAL: 'IGUAL_IGUAL',         // ==
@@ -56,6 +62,7 @@ const TipoToken = {
 };
 
 // Palabras reservadas de Java (case-sensitive)
+// NOTA: args, System, out, println son identificadores, NO palabras reservadas
 const PALABRAS_RESERVADAS = new Set([
     'public',
     'class',
@@ -63,7 +70,6 @@ const PALABRAS_RESERVADAS = new Set([
     'void',
     'main',
     'String',
-    'args',
     'int',
     'double',
     'char',
@@ -74,9 +80,7 @@ const PALABRAS_RESERVADAS = new Set([
     'else',
     'for',
     'while',
-    'System',
-    'out',
-    'println'
+    'do'
 ]);
 
 // Exportar para uso en otros módulos

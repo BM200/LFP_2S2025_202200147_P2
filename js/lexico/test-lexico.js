@@ -1,3 +1,5 @@
+// Importar módulos (Node.js)
+const AnalizadorLexico = require('./AnalizadorLexico.js');
 
 /**
  * Prueba 1: Código Java válido completo
