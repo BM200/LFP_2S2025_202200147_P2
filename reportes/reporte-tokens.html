@@ -1,0 +1,605 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reporte de Tokens - JavaBridge</title>
+    
+            <style>
+                * {
+                    margin: 0;
+                    padding: 0;
+                    box-sizing: border-box;
+                }
+                
+                body {
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    padding: 20px;
+                    min-height: 100vh;
+                }
+                
+                .container {
+                    max-width: 1200px;
+                    margin: 0 auto;
+                    background: white;
+                    border-radius: 10px;
+                    box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                    overflow: hidden;
+                }
+                
+                .header {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 30px;
+                    text-align: center;
+                }
+                
+                .header h1 {
+                    font-size: 2.5em;
+                    margin-bottom: 10px;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                
+                .header p {
+                    font-size: 1.1em;
+                    opacity: 0.9;
+                }
+                
+                .stats {
+                    display: grid;
+                    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                    gap: 20px;
+                    padding: 30px;
+                    background: #f8f9fa;
+                }
+                
+                .stat-card {
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                    text-align: center;
+                    transition: transform 0.3s ease;
+                }
+                
+                .stat-card:hover {
+                    transform: translateY(-5px);
+                    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+                }
+                
+                .stat-number {
+                    font-size: 2.5em;
+                    font-weight: bold;
+                    color: #667eea;
+                    margin-bottom: 5px;
+                }
+                
+                .stat-label {
+                    color: #666;
+                    font-size: 0.9em;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                }
+                
+                .content {
+                    padding: 30px;
+                }
+                
+                table {
+                    width: 100%;
+                    border-collapse: collapse;
+                    margin-top: 20px;
+                    background: white;
+                }
+                
+                thead {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                }
+                
+                th {
+                    padding: 15px;
+                    text-align: left;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    font-size: 0.85em;
+                    letter-spacing: 1px;
+                }
+                
+                td {
+                    padding: 12px 15px;
+                    border-bottom: 1px solid #e0e0e0;
+                }
+                
+                tbody tr:hover {
+                    background-color: #f5f5f5;
+                    transition: background-color 0.2s ease;
+                }
+                
+                tbody tr:nth-child(even) {
+                    background-color: #fafafa;
+                }
+                
+                .token-type {
+                    display: inline-block;
+                    padding: 4px 10px;
+                    border-radius: 4px;
+                    font-size: 0.85em;
+                    font-weight: 500;
+                }
+                
+                .tipo-palabra-reservada {
+                    background: #e3f2fd;
+                    color: #1976d2;
+                }
+                
+                .tipo-identificador {
+                    background: #f3e5f5;
+                    color: #7b1fa2;
+                }
+                
+                .tipo-numero {
+                    background: #e8f5e9;
+                    color: #388e3c;
+                }
+                
+                .tipo-cadena {
+                    background: #fff3e0;
+                    color: #f57c00;
+                }
+                
+                .tipo-simbolo {
+                    background: #fce4ec;
+                    color: #c2185b;
+                }
+                
+                .tipo-operador {
+                    background: #e0f2f1;
+                    color: #00796b;
+                }
+                
+                .error-row {
+                    background-color: #ffebee !important;
+                }
+                
+                .error-icon {
+                    color: #d32f2f;
+                    font-weight: bold;
+                    font-size: 1.2em;
+                }
+                
+                .footer {
+                    background: #f8f9fa;
+                    padding: 20px;
+                    text-align: center;
+                    color: #666;
+                    border-top: 1px solid #e0e0e0;
+                }
+                
+                .timestamp {
+                    font-size: 0.9em;
+                    color: #999;
+                }
+                
+                .no-errors {
+                    text-align: center;
+                    padding: 40px;
+                    color: #4caf50;
+                    font-size: 1.2em;
+                }
+                
+                .no-errors::before {
+                    content: "✓";
+                    display: block;
+                    font-size: 3em;
+                    margin-bottom: 10px;
+                }
+                
+                @media print {
+                    body {
+                        background: white;
+                        padding: 0;
+                    }
+                    
+                    .stat-card:hover {
+                        transform: none;
+                    }
+                }
+            </style>
+        
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📋 Reporte de Tokens</h1>
+            <p>Análisis Léxico - JavaBridge</p>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number">43</div>
+                <div class="stat-label">Tokens Totales</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">13</div>
+                <div class="stat-label">Tipos Diferentes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">9</div>
+                <div class="stat-label">Líneas Analizadas</div>
+            </div>
+        </div>
+        
+        <div class="content">
+            <h2>Tokens Reconocidos</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">No.</th>
+                        <th>Lexema</th>
+                        <th>Tipo</th>
+                        <th style="width: 80px;">Línea</th>
+                        <th style="width: 80px;">Columna</th>
+                    </tr>
+                </thead>
+                <tbody>
+        
+                    <tr>
+                        <td><strong>1</strong></td>
+                        <td><code>public</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>2</td>
+                        <td>1</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>2</strong></td>
+                        <td><code>class</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>2</td>
+                        <td>8</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>3</strong></td>
+                        <td><code>MiClase</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>2</td>
+                        <td>14</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>4</strong></td>
+                        <td><code>{</code></td>
+                        <td><span class="token-type tipo-simbolo">LLAVE_ABRE</span></td>
+                        <td>2</td>
+                        <td>22</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>5</strong></td>
+                        <td><code>public</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>3</td>
+                        <td>5</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>6</strong></td>
+                        <td><code>static</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>3</td>
+                        <td>12</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>7</strong></td>
+                        <td><code>void</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>3</td>
+                        <td>19</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>8</strong></td>
+                        <td><code>main</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>3</td>
+                        <td>24</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>9</strong></td>
+                        <td><code>(</code></td>
+                        <td><span class="token-type tipo-simbolo">PAR_ABRE</span></td>
+                        <td>3</td>
+                        <td>28</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>10</strong></td>
+                        <td><code>String</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>3</td>
+                        <td>29</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>11</strong></td>
+                        <td><code>[</code></td>
+                        <td><span class="token-type tipo-simbolo">COR_ABRE</span></td>
+                        <td>3</td>
+                        <td>35</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>12</strong></td>
+                        <td><code>]</code></td>
+                        <td><span class="token-type tipo-simbolo">COR_CIERRA</span></td>
+                        <td>3</td>
+                        <td>36</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>13</strong></td>
+                        <td><code>args</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>3</td>
+                        <td>38</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>14</strong></td>
+                        <td><code>)</code></td>
+                        <td><span class="token-type tipo-simbolo">PAR_CIERRA</span></td>
+                        <td>3</td>
+                        <td>42</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>15</strong></td>
+                        <td><code>{</code></td>
+                        <td><span class="token-type tipo-simbolo">LLAVE_ABRE</span></td>
+                        <td>3</td>
+                        <td>44</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>16</strong></td>
+                        <td><code>int</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>4</td>
+                        <td>9</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>17</strong></td>
+                        <td><code>x</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>4</td>
+                        <td>13</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>18</strong></td>
+                        <td><code>=</code></td>
+                        <td><span class="token-type tipo-operador">IGUAL</span></td>
+                        <td>4</td>
+                        <td>15</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>19</strong></td>
+                        <td><code>10</code></td>
+                        <td><span class="token-type tipo-simbolo">NUMERO_ENTERO</span></td>
+                        <td>4</td>
+                        <td>17</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>20</strong></td>
+                        <td><code>;</code></td>
+                        <td><span class="token-type tipo-simbolo">PUNTO_COMA</span></td>
+                        <td>4</td>
+                        <td>19</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>21</strong></td>
+                        <td><code>int</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>5</td>
+                        <td>9</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>22</strong></td>
+                        <td><code>y</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>5</td>
+                        <td>13</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>23</strong></td>
+                        <td><code>=</code></td>
+                        <td><span class="token-type tipo-operador">IGUAL</span></td>
+                        <td>5</td>
+                        <td>15</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>24</strong></td>
+                        <td><code>20</code></td>
+                        <td><span class="token-type tipo-simbolo">NUMERO_ENTERO</span></td>
+                        <td>5</td>
+                        <td>17</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>25</strong></td>
+                        <td><code>;</code></td>
+                        <td><span class="token-type tipo-simbolo">PUNTO_COMA</span></td>
+                        <td>5</td>
+                        <td>19</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>26</strong></td>
+                        <td><code>int</code></td>
+                        <td><span class="token-type tipo-palabra-reservada">PALABRA_RESERVADA</span></td>
+                        <td>6</td>
+                        <td>9</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>27</strong></td>
+                        <td><code>suma</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>6</td>
+                        <td>13</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>28</strong></td>
+                        <td><code>=</code></td>
+                        <td><span class="token-type tipo-operador">IGUAL</span></td>
+                        <td>6</td>
+                        <td>18</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>29</strong></td>
+                        <td><code>x</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>6</td>
+                        <td>20</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>30</strong></td>
+                        <td><code>+</code></td>
+                        <td><span class="token-type tipo-simbolo">MAS</span></td>
+                        <td>6</td>
+                        <td>22</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>31</strong></td>
+                        <td><code>y</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>6</td>
+                        <td>24</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>32</strong></td>
+                        <td><code>;</code></td>
+                        <td><span class="token-type tipo-simbolo">PUNTO_COMA</span></td>
+                        <td>6</td>
+                        <td>25</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>33</strong></td>
+                        <td><code>System</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>7</td>
+                        <td>9</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>34</strong></td>
+                        <td><code>.</code></td>
+                        <td><span class="token-type tipo-simbolo">PUNTO</span></td>
+                        <td>7</td>
+                        <td>15</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>35</strong></td>
+                        <td><code>out</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>7</td>
+                        <td>16</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>36</strong></td>
+                        <td><code>.</code></td>
+                        <td><span class="token-type tipo-simbolo">PUNTO</span></td>
+                        <td>7</td>
+                        <td>19</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>37</strong></td>
+                        <td><code>println</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>7</td>
+                        <td>20</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>38</strong></td>
+                        <td><code>(</code></td>
+                        <td><span class="token-type tipo-simbolo">PAR_ABRE</span></td>
+                        <td>7</td>
+                        <td>27</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>39</strong></td>
+                        <td><code>suma</code></td>
+                        <td><span class="token-type tipo-identificador">IDENTIFICADOR</span></td>
+                        <td>7</td>
+                        <td>28</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>40</strong></td>
+                        <td><code>)</code></td>
+                        <td><span class="token-type tipo-simbolo">PAR_CIERRA</span></td>
+                        <td>7</td>
+                        <td>32</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>41</strong></td>
+                        <td><code>;</code></td>
+                        <td><span class="token-type tipo-simbolo">PUNTO_COMA</span></td>
+                        <td>7</td>
+                        <td>33</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>42</strong></td>
+                        <td><code>}</code></td>
+                        <td><span class="token-type tipo-simbolo">LLAVE_CIERRA</span></td>
+                        <td>8</td>
+                        <td>5</td>
+                    </tr>
+            
+                    <tr>
+                        <td><strong>43</strong></td>
+                        <td><code>}</code></td>
+                        <td><span class="token-type tipo-simbolo">LLAVE_CIERRA</span></td>
+                        <td>9</td>
+                        <td>1</td>
+                    </tr>
+            
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="footer">
+            <p><strong>JavaBridge</strong> - Traductor Java → Python</p>
+            <p class="timestamp">Generado: 25/10/2025, 8:05:07 a. m.</p>
+            <p class="timestamp">Carnet: 202200147</p>
+        </div>
+    </div>
+</body>
+</html>
+        

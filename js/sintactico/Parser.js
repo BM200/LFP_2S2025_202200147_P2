@@ -207,7 +207,12 @@ class Parser {
         while (this.tokenActual() && this.tokenActual().tipo !== 'LLAVE_CIERRA') {
             const sentencia = this.parsearSentencia();
             if (sentencia) {
-                sentencias.push(sentencia);
+                // Si es un array (declaraciones múltiples), agregar cada elemento
+                if (Array.isArray(sentencia)) {
+                    sentencias.push(...sentencia);
+                } else {
+                    sentencias.push(sentencia);
+                }
             } else {
                 // Si no se pudo parsear, avanzar para evitar ciclo infinito
                 this.avanzar();
@@ -224,6 +229,12 @@ class Parser {
         const token = this.tokenActual();
 
         if (!token) return null;
+
+        // IGNORAR COMENTARIOS - El léxico los reconoce, pero el parser los salta
+        if (token.tipo === 'COMENTARIO_LINEA' || token.tipo === 'COMENTARIO_BLOQUE') {
+            this.avanzar(); // Saltar el comentario
+            return this.parsearSentencia(); // Continuar con la siguiente sentencia
+        }
 
         // Declaración: int x = 10;
         if (this.esTipoDato(token)) {
@@ -267,40 +278,70 @@ class Parser {
     }
 
     /**
-     * DECLARACION ::= TIPO ID '=' EXPRESION ';'
-     *              |  TIPO ID ';'
+     * DECLARACION ::= TIPO ID ('=' EXPRESION)? (',' ID ('=' EXPRESION)?)* ';'
+     * Soporta:
+     * - int a;
+     * - int a = 10;
+     * - int a, b, c;
+     * - int x = 1, y = 2, z = 3;
      */
     parsearDeclaracion() {
         const tipo = this.tokenActual();
         this.avanzar();
 
-        const id = this.esperarToken('IDENTIFICADOR');
-        if (!id) return null;
+        const declaraciones = [];
 
-        let expresion = null;
+        do {
+            const id = this.esperarToken('IDENTIFICADOR');
+            if (!id) return null;
 
-        // Verificar si hay inicialización
-        if (this.tokenActual() && this.tokenActual().tipo === 'IGUAL') {
-            this.avanzar(); // Consumir '='
-            expresion = this.parsearExpresion();
-        }
+            let expresion = null;
+
+            // Verificar si hay inicialización
+            if (this.tokenActual() && this.tokenActual().tipo === 'IGUAL') {
+                this.avanzar(); // Consumir '='
+                expresion = this.parsearExpresion();
+            }
+
+            // Agregar a tabla de símbolos
+            const resultado = this.tablaSimbolos.agregar(
+                id.lexema,
+                tipo.lexema,
+                null,
+                id.linea,
+                id.columna
+            );
+
+            if (!resultado.exito) {
+                this.reportarError(resultado.error);
+            }
+
+            // Crear nodo de declaración
+            const nodoDeclaracion = new Declaracion(
+                tipo.lexema,
+                id.lexema,
+                expresion,
+                id.linea,
+                id.columna
+            );
+
+            declaraciones.push(nodoDeclaracion);
+
+            // Verificar si hay más declaraciones (separadas por coma)
+            if (this.tokenActual() && this.tokenActual().tipo === 'COMA') {
+                this.avanzar(); // Consumir ','
+                continue; // Continuar con la siguiente declaración
+            } else {
+                break; // No hay más declaraciones
+            }
+
+        } while (true);
 
         this.esperarToken('PUNTO_COMA');
 
-        // Agregar a tabla de símbolos
-        const resultado = this.tablaSimbolos.agregar(
-            id.lexema,
-            tipo.lexema,
-            null,
-            id.linea,
-            id.columna
-        );
-
-        if (!resultado.exito) {
-            this.reportarError(resultado.error);
-        }
-
-        return new Declaracion(tipo.lexema, id.lexema, expresion);
+        // Si solo hay una declaración, retornar el nodo directamente
+        // Si hay múltiples, retornar un array (el AST lo manejará)
+        return declaraciones.length === 1 ? declaraciones[0] : declaraciones;
     }
 
     /**
