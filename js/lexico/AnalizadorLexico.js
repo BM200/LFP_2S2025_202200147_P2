@@ -1,7 +1,37 @@
 /**
- * ANALIZADOR LÉXICO (AFD - Autómata Finito Determinista)
+ * ============================================================================
+ * ANALIZADOR LÉXICO - AFD (Autómata Finito Determinista) Manual
+ * ============================================================================
+ * 
  * Este analizador implementa un AFD manual que reconoce tokens de Java
- * mediante la lectura secuencial del código fuente.
+ * mediante la lectura carácter por carácter del código fuente.
+ * 
+ * ESTADOS DEL AFD:
+ * ----------------
+ * S0  - Estado Inicial (esperando siguiente token)
+ * S1  - Leyendo Identificador/Palabra Reservada
+ * S2  - Leyendo Número Entero
+ * S3  - Leyendo Número Decimal (después del punto)
+ * S4  - Leyendo Cadena de texto (comillas dobles)
+ * S5  - Leyendo Carácter (comillas simples)
+ * S6  - Leyendo Comentario de línea (barras diagonales dobles)
+ * S7  - Leyendo Comentario de bloque (barra-asterisco)
+ * S8  - Leyendo Operador de 1 carácter (más, menos, por, etc.)
+ * S9  - Leyendo Operador de 2 caracteres (doble ampersand, doble pipe, etc.)
+ * SF  - Estado Final (token reconocido)
+ * 
+ * TRANSICIONES:
+ * -------------
+ * S0 → S1: Si encuentra letra o guion bajo
+ * S0 → S2: Si encuentra dígito o guion seguido de dígito
+ * S0 → S4: Si encuentra comilla doble
+ * S0 → S5: Si encuentra comilla simple
+ * S0 → S6: Si encuentra dos barras diagonales
+ * S0 → S7: Si encuentra barra-asterisco
+ * S0 → S8/S9: Si encuentra operador o símbolo
+ * 
+ * Restricción: NO SE USA REGEX - Todo es procesamiento manual con charCodeAt()
+ * ============================================================================
  */
 
 // Importar dependencias (Node.js)
@@ -31,74 +61,80 @@ class AnalizadorLexico {
 
     /**
      * Método principal - Analiza todo el input y genera tokens
+     * Este método implementa el ciclo principal del AFD
      * @returns {Object} { tokens: Token[], errores: Object[] }
      */
     analizar() {
+        // CICLO PRINCIPAL DEL AFD - Procesa carácter por carácter
         while (this.pos < this.input.length) {
             const char = this.actual();
             
-            // Ignorar espacios en blanco
+            // ============================================================
+            // ESTADO S0: Estado Inicial - Determinar siguiente transición
+            // ============================================================
+            
+            // TRANSICIÓN: S0 → S0 (si espacio en blanco, permanecer en S0)
             if (this.esEspacio(char)) {
-                this.avanzar();
+                this.avanzar(); // Consumir espacio y volver a S0
                 continue;
             }
             
-            // Comentarios de línea: //
+            // TRANSICIÓN: S0 → S6 (Comentario de línea //)
             if (char === '/' && this.siguiente() === '/') {
-                this.leerComentarioLinea();
-                continue;
+                this.leerComentarioLinea(); // Entrar a estado S6
+                continue; // Volver a S0 después de procesar
             }
             
-            // Comentarios de bloque: /* */
+            // TRANSICIÓN: S0 → S7 (Comentario de bloque /* */)
             if (char === '/' && this.siguiente() === '*') {
-                this.leerComentarioBloque();
-                continue;
+                this.leerComentarioBloque(); // Entrar a estado S7
+                continue; // Volver a S0 después de procesar
             }
             
-            // Identificadores y palabras reservadas
+            // TRANSICIÓN: S0 → S1 (Identificador o palabra reservada)
             if (this.esLetra(char) || char === '_') {
-                this.leerIdentificador();
-                continue;
+                this.leerIdentificador(); // Entrar a estado S1
+                continue; // Volver a S0 después de reconocer token
             }
             
-            // Números (enteros y decimales)
+            // TRANSICIÓN: S0 → S2 (Número entero o decimal)
             if (this.esDigito(char)) {
-                this.leerNumero();
-                continue;
+                this.leerNumero(); // Entrar a estado S2
+                continue; // Volver a S0 después de reconocer token
             }
             
-            // Números negativos
+            // TRANSICIÓN: S0 → S2 (Número negativo)
             if (char === '-' && this.esDigito(this.siguiente())) {
-                this.leerNumero();
-                continue;
+                this.leerNumero(); // Entrar a estado S2
+                continue; // Volver a S0 después de reconocer token
             }
             
-            // Cadenas de texto: "..."
+            // TRANSICIÓN: S0 → S4 (Cadena de texto "...")
             if (char === '"') {
-                this.leerCadena();
-                continue;
+                this.leerCadena(); // Entrar a estado S4
+                continue; // Volver a S0 después de reconocer token
             }
             
-            // Caracteres: '...'
+            // TRANSICIÓN: S0 → S5 (Carácter '...')
             if (char === "'") {
-                this.leerCaracter();
-                continue;
+                this.leerCaracter(); // Entrar a estado S5
+                continue; // Volver a S0 después de reconocer token
             }
             
-            // Símbolos y operadores
+            // TRANSICIÓN: S0 → S8/S9 (Símbolos y operadores)
             if (this.esSimbolo(char)) {
-                this.leerSimbolo();
-                continue;
+                this.leerSimbolo(); // Entrar a estado S8 o S9
+                continue; // Volver a S0 después de reconocer token
             }
             
-            // Carácter no reconocido - ERROR LÉXICO
+            // ERROR: Carácter no reconocido - No hay transición válida desde S0
             this.agregarError(
                 char,
                 'Carácter no reconocido',
                 this.linea,
                 this.columna
             );
-            this.avanzar();
+            this.avanzar(); // Saltar carácter inválido y volver a S0
         }
         
         return {
@@ -109,36 +145,60 @@ class AnalizadorLexico {
     }
 
     /**
-     * Lee un identificador o palabra reservada
-     * Patrón: [A-Za-z_][A-Za-z0-9_]*
+     * ============================================================
+     * ESTADO S1: Leer Identificador o Palabra Reservada
+     * ============================================================
+     * Patrón AFD: [A-Za-z_][A-Za-z0-9_]*
+     * 
+     * Transiciones dentro de S1:
+     * - S1 → S1: mientras sea letra, dígito o '_'
+     * - S1 → SF: cuando encuentra cualquier otro carácter (fin del identificador)
      */
     leerIdentificador() {
         const inicioLinea = this.linea;
         const inicioColumna = this.columna;
         let lexema = '';
         
-        // Primer carácter debe ser letra o _
+        // BUCLE DENTRO DEL ESTADO S1
         while (this.pos < this.input.length) {
             const char = this.actual();
+            
+            // TRANSICIÓN: S1 → S1 (si es letra, dígito o '_')
             if (this.esLetraODigito(char) || char === '_') {
-                lexema += char;
-                this.avanzar();
+                lexema += char; // Acumular carácter
+                this.avanzar(); // Avanzar posición
             } else {
+                // TRANSICIÓN: S1 → SF (fin del identificador)
                 break;
             }
         }
         
-        // Verificar si es palabra reservada
+        // ESTADO SF: Token reconocido, determinar tipo
+        // Verificar si es palabra reservada (int, double, if, for, etc.)
         const tipo = PALABRAS_RESERVADAS.has(lexema) 
             ? TipoToken.PALABRA_RESERVADA 
             : TipoToken.IDENTIFICADOR;
         
+        // Crear token y agregarlo a la lista
         this.tokens.push(new Token(tipo, lexema, inicioLinea, inicioColumna));
+        
+        // Regresar a S0 (estado inicial)
     }
 
     /**
-     * Lee un número (entero o decimal)
-     * Permite negativos: -123, -45.67
+     * ============================================================
+     * ESTADOS S2 y S3: Leer Número (Entero o Decimal)
+     * ============================================================
+     * Patrón AFD: -?[0-9]+(\.[0-9]+)?
+     * 
+     * S2: Leyendo parte entera
+     * S3: Leyendo parte decimal (después del punto)
+     * 
+     * Transiciones:
+     * - S2 → S2: mientras sea dígito
+     * - S2 → S3: cuando encuentra '.'
+     * - S3 → S3: mientras sea dígito
+     * - S2/S3 → SF: cuando encuentra cualquier otro carácter
      */
     leerNumero() {
         const inicioLinea = this.linea;
@@ -147,23 +207,26 @@ class AnalizadorLexico {
         let esDecimal = false;
         let puntosEncontrados = 0;
         
-        // Signo negativo
+        // Signo negativo opcional
         if (this.actual() === '-') {
             lexema += '-';
             this.avanzar();
         }
         
+        // ESTADO S2: Leyendo parte entera
         while (this.pos < this.input.length) {
             const char = this.actual();
             
+            // TRANSICIÓN: S2 → S2 (mientras sea dígito)
             if (this.esDigito(char)) {
                 lexema += char;
                 this.avanzar();
-            } else if (char === '.' && !esDecimal) {
-                // Primer punto decimal
+            } 
+            // TRANSICIÓN: S2 → S3 (punto decimal encontrado)
+            else if (char === '.' && !esDecimal) {
                 puntosEncontrados++;
                 if (puntosEncontrados > 1) {
-                    // Error: múltiples puntos decimales
+                    // ERROR: múltiples puntos decimales
                     this.agregarError(
                         lexema + char,
                         'Número decimal inválido',
@@ -171,17 +234,20 @@ class AnalizadorLexico {
                         inicioColumna
                     );
                     this.avanzar();
-                    return;
+                    return; // Salir del estado con error
                 }
+                // CAMBIO DE ESTADO: S2 → S3
                 esDecimal = true;
                 lexema += char;
                 this.avanzar();
-            } else {
+            } 
+            // TRANSICIÓN: S2/S3 → SF (fin del número)
+            else {
                 break;
             }
         }
         
-        // Verificar que después del punto haya al menos un dígito
+        // Validar número decimal bien formado
         if (esDecimal && !this.esDigito(lexema[lexema.length - 1])) {
             this.agregarError(
                 lexema,
@@ -282,7 +348,17 @@ class AnalizadorLexico {
     }
 
     /**
-     * Lee símbolos y operadores
+     * ============================================================
+     * ESTADOS S8 y S9: Leer Símbolos y Operadores
+     * ============================================================
+     * S8: Operador de 1 carácter (+, -, *, /, %, <, >, !, =, etc.)
+     * S9: Operador de 2 caracteres (&&, ||, ==, !=, >=, <=, ++, --)
+     * 
+     * Transiciones:
+     * - S0 → S8: si encuentra símbolo de 1 carácter
+     * - S0 → S9: si encuentra inicio de operador de 2 caracteres
+     * - S9 → SF: después de leer el segundo carácter
+     * - S8 → SF: después de leer el carácter
      */
     leerSimbolo() {
         const inicioLinea = this.linea;
@@ -290,14 +366,19 @@ class AnalizadorLexico {
         const char = this.actual();
         const siguiente = this.siguiente();
         
-        // Operadores de dos caracteres
+        // ============================================================
+        // ESTADO S9: Operadores de DOS caracteres
+        // ============================================================
+        
+        // TRANSICIÓN: S0 → S9 → SF (operador ==)
         if (char === '=' && siguiente === '=') {
             this.tokens.push(new Token(TipoToken.IGUAL_IGUAL, '==', inicioLinea, inicioColumna));
-            this.avanzar();
-            this.avanzar();
-            return;
+            this.avanzar(); // Consumir primer carácter
+            this.avanzar(); // Consumir segundo carácter → SF
+            return; // Regresar a S0
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador !=)
         if (char === '!' && siguiente === '=') {
             this.tokens.push(new Token(TipoToken.DIFERENTE, '!=', inicioLinea, inicioColumna));
             this.avanzar();
@@ -305,6 +386,7 @@ class AnalizadorLexico {
             return;
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador >=)
         if (char === '>' && siguiente === '=') {
             this.tokens.push(new Token(TipoToken.MAYOR_IGUAL, '>=', inicioLinea, inicioColumna));
             this.avanzar();
@@ -312,6 +394,7 @@ class AnalizadorLexico {
             return;
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador <=)
         if (char === '<' && siguiente === '=') {
             this.tokens.push(new Token(TipoToken.MENOR_IGUAL, '<=', inicioLinea, inicioColumna));
             this.avanzar();
@@ -319,6 +402,7 @@ class AnalizadorLexico {
             return;
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador ++)
         if (char === '+' && siguiente === '+') {
             this.tokens.push(new Token(TipoToken.INCREMENTO, '++', inicioLinea, inicioColumna));
             this.avanzar();
@@ -326,6 +410,7 @@ class AnalizadorLexico {
             return;
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador --)
         if (char === '-' && siguiente === '-') {
             this.tokens.push(new Token(TipoToken.DECREMENTO, '--', inicioLinea, inicioColumna));
             this.avanzar();
@@ -333,6 +418,7 @@ class AnalizadorLexico {
             return;
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador &&)
         if (char === '&' && siguiente === '&') {
             this.tokens.push(new Token(TipoToken.AND, '&&', inicioLinea, inicioColumna));
             this.avanzar();
@@ -340,6 +426,7 @@ class AnalizadorLexico {
             return;
         }
         
+        // TRANSICIÓN: S0 → S9 → SF (operador ||)
         if (char === '|' && siguiente === '|') {
             this.tokens.push(new Token(TipoToken.OR, '||', inicioLinea, inicioColumna));
             this.avanzar();
@@ -347,7 +434,9 @@ class AnalizadorLexico {
             return;
         }
         
-        // Operadores de un carácter
+        // ============================================================
+        // ESTADO S8: Operadores de UN carácter
+        // ============================================================
         const simbolos = {
             '{': TipoToken.LLAVE_ABRE,
             '}': TipoToken.LLAVE_CIERRA,
@@ -371,36 +460,48 @@ class AnalizadorLexico {
         
         const tipo = simbolos[char];
         if (tipo) {
+            // TRANSICIÓN: S0 → S8 → SF (símbolo de 1 carácter reconocido)
             this.tokens.push(new Token(tipo, char, inicioLinea, inicioColumna));
-            this.avanzar();
+            this.avanzar(); // Consumir carácter → SF
+            // Regresar a S0
         }
     }
 
     /**
-     * Lee comentario de línea: // hasta fin de línea
+     * ============================================================
+     * ESTADO S6: Leer Comentario de Línea (//)
+     * ============================================================
+     * Transiciones:
+     * - S6 → S6: mientras no sea '\n'
+     * - S6 → SF: cuando encuentra '\n' (fin de línea)
      */
     leerComentarioLinea() {
         const inicioLinea = this.linea;
         const inicioColumna = this.columna;
         let lexema = '';
         
-        // Consumir //
-        lexema += this.actual();
+        // Consumir los dos caracteres "//"
+        lexema += this.actual(); // /
         this.avanzar();
-        lexema += this.actual();
+        lexema += this.actual(); // /
         this.avanzar();
         
-        // Leer hasta fin de línea
+        // BUCLE DENTRO DEL ESTADO S6
+        // TRANSICIÓN: S6 → S6 (mientras no sea fin de línea)
         while (this.pos < this.input.length && this.actual() !== '\n') {
             lexema += this.actual();
             this.avanzar();
         }
         
+        // TRANSICIÓN: S6 → SF (token de comentario reconocido)
         this.tokens.push(new Token(TipoToken.COMENTARIO_LINEA, lexema, inicioLinea, inicioColumna));
+        // Regresar a S0
     }
 
     /**
-     * Lee comentario de bloque: /* ... *\/
+     * ============================================================
+     * ESTADO S7: Leer Comentario de Bloque
+     * ============================================================
      */
     leerComentarioBloque() {
         const inicioLinea = this.linea;
@@ -520,6 +621,48 @@ class AnalizadorLexico {
         });
     }
 }
+
+/**
+ * ============================================================================
+ * DIAGRAMA DE ESTADOS DEL AFD - JavaBridge Analizador Léxico
+ * ============================================================================
+ * 
+ * TOTAL DE ESTADOS: 10 estados
+ * 
+ * S0  = Estado Inicial
+ * S1  = Identificador
+ * S2  = Número Entero  
+ * S3  = Número Decimal
+ * S4  = Cadena de texto
+ * S5  = Carácter
+ * S6  = Comentario de línea
+ * S7  = Comentario de bloque
+ * S8  = Operador de 1 carácter
+ * S9  = Operador de 2 caracteres
+ * SF  = Estado Final (token reconocido)
+ * 
+ * MÉTODO DE LECTURA MANUAL:
+ * -------------------------
+ * - charCodeAt(): Lee el código ASCII de cada carácter
+ * - Ejemplo: 'A'.charCodeAt(0) retorna 65
+ * - Comparaciones manuales: (code >= 65 && code <= 90) para letras mayúsculas
+ * - NO SE USA REGEX como lo requiere el enunciado del proyecto
+ * 
+ * TRANSICIONES PRINCIPALES:
+ * -------------------------
+ * Desde S0 (Estado Inicial):
+ *   - Si [A-Za-z_] → S1 (Identificador)
+ *   - Si [0-9] → S2 (Número)
+ *   - Si comilla doble → S4 (Cadena)
+ *   - Si comilla simple → S5 (Carácter)
+ *   - Si // → S6 (Comentario línea)
+ *   - Si barra-asterisco → S7 (Comentario bloque)
+ *   - Si operador 2 chars → S9 (&&, ||, ++, --, ==, !=, >=, <=)
+ *   - Si operador 1 char → S8 (+, -, *, /, %, >, <, !, =, ;, ,, ., etc.)
+ * 
+ * Todos los estados eventualmente regresan a S0 después de reconocer un token
+ * ============================================================================
+ */
 
 // Exportar para uso en otros módulos
 if (typeof module !== 'undefined' && module.exports) {
