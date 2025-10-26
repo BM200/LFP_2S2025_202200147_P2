@@ -1,0 +1,26 @@
+{
+  "name": "lfp_p2_202200147",
+  "version": "1.0.0",
+  "main": "index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BM200/LFP_2S2025_202200147_P2.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BM200/LFP_2S2025_202200147_P2/issues"
+  },
+  "homepage": "https://github.com/BM200/LFP_2S2025_202200147_P2#readme",
+  "description": "",
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

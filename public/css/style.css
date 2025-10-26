@@ -1,0 +1,60 @@
+:root {
+    --dark-bg: #1e1e1e;
+    --dark-secondary: #252526;
+    --dark-tertiary: #2d2d2d;
+    --border-color: #444444;
+}
+
+body {
+    background-color: var(--dark-bg);
+}
+
+.card {
+    border: 1px solid var(--border-color);
+}
+
+.card.bg-dark-tertiary {
+    background-color: var(--dark-tertiary);
+}
+
+.card-header {
+    background-color: var(--dark-secondary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-footer {
+    background-color: var(--dark-secondary);
+    border-top: 1px solid var(--border-color);
+}
+
+.code-editor {
+    background-color: var(--dark-bg) !important;
+    color: #d4d4d4 !important;
+    border: none;
+    border-radius: 0;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 0.9rem;
+    height: 100%;
+    width: 100%;
+    padding: 1rem;
+    resize: none;
+}
+
+textarea:focus {
+    box-shadow: none !important;
+}
+
+/* Ensure card body and editors fill the space */
+.card-body {
+    display: flex;
+    flex-direction: column;
+}
+
+main .card {
+    height: calc(100vh - 120px) !important; /* Adjust height dynamically */
+}
+
+.modal-content {
+    background-color: var(--dark-tertiary);
+    border: 1px solid var(--border-color);
+}

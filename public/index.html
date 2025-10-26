@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="es" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traductor Java — Python</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <!-- ================== NAVBAR ================== -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark-subtle border-bottom border-secondary-subtle">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">Traductor Java — Python</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Archivo</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Nuevo</a></li>
+                            <li><a class="dropdown-item" href="#">Abrir</a></li>
+                            <li><a class="dropdown-item" href="#">Guardar</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Traducir</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" id="btnGenerarTraduccionMenu">Generar Traducción</a></li>
+                            <li><a class="dropdown-item" href="#" id="btnVerTokensMenu">Ver Tokens</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">Ayuda</a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#">Acerca de</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <!-- ================== EDITORS ================== -->
+    <main class="container-fluid mt-3">
+        <div class="row g-3">
+            <!-- Java Editor -->
+            <div class="col-md-6">
+                <div class="card h-100 bg-dark-tertiary">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Editor (Java)</span>
+                        <span class="text-muted small">Sin título — código no guardado</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <textarea id="java-editor" class="form-control code-editor" spellcheck="false">// Escribe tu código Java aquí...</textarea>
+                    </div>
+                    <div class="card-footer text-start">
+                        <button class="btn btn-secondary btn-sm">Nuevo</button>
+                        <button class="btn btn-secondary btn-sm">Abrir</button>
+                        <button class="btn btn-secondary btn-sm">Guardar</button>
+                        <button class="btn btn-primary btn-sm" id="btnGenerarTraduccion">Generar Traducción</button>
+                        <button class="btn btn-outline-info btn-sm" id="btnVerTokens">Ver Tokens</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Python Output -->
+            <div class="col-md-6">
+                <div class="card h-100 bg-dark-tertiary">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <span>Python traducido</span>
+                        <span class="text-muted small">Generado</span>
+                    </div>
+                    <div class="card-body p-0">
+                        <pre><code id="python-output" class="code-editor d-block"># Aquí aparecerá el Python traducido...</code></pre>
+                    </div>
+                    <div class="card-footer text-start">
+                        <button class="btn btn-secondary btn-sm">Guardar Python como...</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+    
+    <!-- ================== TOKENS MODAL ================== -->
+  <!-- ================== TOKENS MODAL ================== -->
+<div class="modal fade" id="tokensModal" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- Hacemos el modal más grande -->
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Reporte de Análisis Léxico</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Sección para la tabla de errores (NUEVO) -->
+                <div id="error-report-container" class="mb-4" style="display: none;">
+                    <h6 class="text-danger">Errores Léxicos Encontrados</h6>
+                    <div class="table-responsive" style="max-height: 25vh;">
+                        <table class="table table-danger table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th scope="col">Línea</th>
+                                    <th scope="col">Columna</th>
+                                    <th scope="col">Error</th>
+                                    <th scope="col">Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody id="errors-table-body">
+                                <!-- Filas de errores se insertarán aquí -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Sección para la tabla de tokens -->
+                <h6>Tokens Generados</h6>
+                <div class="table-responsive" style="max-height: 50vh;">
+                    <table class="table table-striped table-hover">
+                        <thead>
+                            <tr>
+                                <th scope="col">No.</th>
+                                <th scope="col">Lexema</th>
+                                <th scope="col">Tipo</th>
+                                <th scope="col">Línea</th>
+                                <th scope="col">Columna</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tokens-table-body">
+                            <!-- Filas de tokens se insertarán aquí -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                <button type="button" class="btn btn-primary">Descargar HTML</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Scripts del Analizador (deben cargarse antes que app.js) -->
+    <script src="src/analyzer/Token.js"></script>
+    <script src="src/analyzer/TipoToken.js"></script>
+    <script src="src/analyzer/AnalizadorLexico.js"></script>
+    <!-- ======================================================= -->
+    <!-- Scripts del AST y Parser -->
+    <script src="src/ast/Nodo.js"></script>
+    <script src="src/analyzer/Parser.js"></script>
+    <!-- Custom JS -->
+    <script src="js/app.js"></script>
+</body>
+</html>
