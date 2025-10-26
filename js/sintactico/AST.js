@@ -247,6 +247,25 @@ class Identificador extends NodoAST {
 }
 
 // ============================================================================
+// COMENTARIOS
+// ============================================================================
+
+class Comentario extends NodoAST {
+    /**
+     * Representa un comentario de línea o de bloque
+     */
+    constructor(texto, tipoComentario) {
+        super('COMENTARIO');
+        this.texto = texto;
+        this.tipoComentario = tipoComentario; // 'LINEA' o 'BLOQUE'
+    }
+
+    toString() {
+        return `Comentario(${this.tipoComentario}: ${this.texto.substring(0, 30)}...)`;
+    }
+}
+
+// ============================================================================
 // EXPORTAR CLASES (para Node.js y navegador)
 // ============================================================================
 
@@ -266,6 +285,7 @@ if (typeof module !== 'undefined' && module.exports) {
         ExpresionUnaria,
         LlamadaFuncion,
         Literal,
-        Identificador
+        Identificador,
+        Comentario
     };
 }

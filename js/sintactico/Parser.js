@@ -27,7 +27,8 @@ if (typeof require !== 'undefined') {
         ExpresionUnaria,
         LlamadaFuncion,
         Literal,
-        Identificador
+        Identificador,
+        Comentario
     } = require('./AST.js');
 
     // Hacer disponibles globalmente para uso en la clase
@@ -45,6 +46,7 @@ if (typeof require !== 'undefined') {
     global.LlamadaFuncion = LlamadaFuncion;
     global.Literal = Literal;
     global.Identificador = Identificador;
+    global.Comentario = Comentario;
 }
 
 class Parser {
@@ -223,17 +225,24 @@ class Parser {
     }
 
     /**
-     * SENTENCIA ::= DECLARACION | IGUAL | IF | FOR | WHILE | DO_WHILE | PRINT | INCREMENTO | DECREMENTO
+     * SENTENCIA ::= DECLARACION | IGUAL | IF | FOR | WHILE | DO_WHILE | PRINT | INCREMENTO | DECREMENTO | COMENTARIO
      */
     parsearSentencia() {
         const token = this.tokenActual();
 
         if (!token) return null;
 
-        // IGNORAR COMENTARIOS - El léxico los reconoce, pero el parser los salta
-        if (token.tipo === 'COMENTARIO_LINEA' || token.tipo === 'COMENTARIO_BLOQUE') {
-            this.avanzar(); // Saltar el comentario
-            return this.parsearSentencia(); // Continuar con la siguiente sentencia
+        // COMENTARIOS - Guardarlos en el AST para traducirlos a Python
+        if (token.tipo === 'COMENTARIO_LINEA') {
+            const texto = token.lexema;
+            this.avanzar();
+            return new Comentario(texto, 'LINEA');
+        }
+
+        if (token.tipo === 'COMENTARIO_BLOQUE') {
+            const texto = token.lexema;
+            this.avanzar();
+            return new Comentario(texto, 'BLOQUE');
         }
 
         // Declaración: int x = 10;

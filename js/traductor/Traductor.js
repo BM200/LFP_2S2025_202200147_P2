@@ -127,6 +127,8 @@ class Traductor {
         if (!nodo) return '';
 
         switch (nodo.tipo) {
+            case 'COMENTARIO':
+                return this.traducirComentario(nodo);
             case 'DECLARACION':
                 return this.traducirDeclaracion(nodo);
             case 'ASIGNACION':
@@ -150,6 +152,33 @@ class Traductor {
                 });
                 return '';
         }
+    }
+
+    /**
+     * Traduce un comentario de Java a Python
+     * Comentarios de línea se convierten a # en Python
+     * Comentarios de bloque se convierten a # o triple comilla
+     */
+    traducirComentario(nodo) {
+        let codigo = this.indent();
+
+        if (nodo.tipoComentario === 'LINEA') {
+            // Comentario de línea: // texto → # texto
+            const texto = nodo.texto.replace(/^\/\/\s*/, ''); // Quitar //
+            codigo += `# ${texto}\n`;
+        } else if (nodo.tipoComentario === 'BLOQUE') {
+            // Comentario de bloque: quitar delimitadores y usar # o triple comilla
+            let texto = nodo.texto.replace(/^\/\*\s*/, '').replace(/\s*\*\/$/, ''); // Quitar delimitadores
+            
+            // Si el comentario tiene saltos de línea, usar comentario multilinea de Python
+            if (texto.includes('\n')) {
+                codigo += `"""\n${texto}\n"""\n`;
+            } else {
+                codigo += `# ${texto}\n`;
+            }
+        }
+
+        return codigo;
     }
 
     /**
